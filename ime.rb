@@ -159,7 +159,3 @@ module IME
   protected
   BASE_URL = "http://www.ime.ntnu.no/api"
 end
-course = IME::Course.find_course("tdt4100")
-course.educational_role.each do |role|
-  p role["person"].to_s
-end
