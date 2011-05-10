@@ -160,4 +160,6 @@ module IME
   BASE_URL = "http://www.ime.ntnu.no/api"
 end
 course = IME::Course.find_course("tdt4100")
-p  course.educational_role.first["person"]
+course.educational_role.each do |role|
+  p role["person"].to_s
+end
