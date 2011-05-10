@@ -7,6 +7,8 @@ module IME
     attr_reader :code, :name, :norwegian_name, :english_name, :version_code, :credit, :credit_type_code, :credit_type_name, :study_level_code, :study_level, :study_level_name, :study_programme_code, :course_type_code, :course_type_name, :grade_rule, :grade_rule_text, :taught_in_spring, :taught_in_autumn, :taught_from_term, :taught_from_year, :taught_in_english, :ouID, :info_types, :assessment, :educational_role, :education_term, :mandatory_activity, :subject_area, :credit_reduction
     @@courses = []
 
+
+
     def self.find_course(course_code)
       course = Course.exists(course_code)
       unless course.nil?
@@ -66,7 +68,7 @@ module IME
       course["subjectArea"].each do |area|
         @subject_area << Area.new(area)
       end
-      
+
       @@courses << self
     end
 
@@ -80,7 +82,7 @@ module IME
     end
 
   end
-  
+
   class Area
     @@areas = []
     attr_reader :code, :name, :norwegian_name, :english_name
@@ -154,8 +156,23 @@ module IME
       nil
     end
   end
+  def self.find_all_courses
+    url = BASE_URL + "/course/-"
+    file = File.open(open(url).path, "rb")
+    json = file.read
+    result = JSON.parse(json)
+    if result.has_key? 'Error'
+      raise "WebServiceError"
+    end
+    courses = []
+    result["course"].each do |course|
+      courses << course["code"]
+    end
+    return courses
+  end
 
 
   protected
   BASE_URL = "http://www.ime.ntnu.no/api"
+
 end
