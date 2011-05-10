@@ -1,0 +1,8 @@
+This is a simple API written in Ruby for IME course information.
+
+Original JSON API by http://www.ime.ntnu.no/api/
+
+TODO:
+* Organization units
+* All subjects list
+* Schedules
