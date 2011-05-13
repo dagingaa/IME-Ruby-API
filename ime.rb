@@ -5,15 +5,8 @@ require 'open-uri'
 module IME
   class Course
     attr_reader :code, :name, :norwegian_name, :english_name, :version_code, :credit, :credit_type_code, :credit_type_name, :study_level_code, :study_level, :study_level_name, :study_programme_code, :course_type_code, :course_type_name, :grade_rule, :grade_rule_text, :taught_in_spring, :taught_in_autumn, :taught_from_term, :taught_from_year, :taught_in_english, :ouID, :info_types, :assessment, :educational_role, :education_term, :mandatory_activity, :subject_area, :credit_reduction
-    @@courses = []
-
-
 
     def self.find_course(course_code)
-      course = Course.exists(course_code)
-      unless course.nil?
-        return course
-      end
       url = BASE_URL + "/course/" + course_code
       result = JSON.parse(open(url).string)
       if result.has_key? 'Error'
@@ -68,43 +61,16 @@ module IME
       course["subjectArea"].each do |area|
         @subject_area << Area.new(area)
       end
-
-      @@courses << self
     end
-
-    def self.exists(course_code)
-      @@courses.each do |course|
-        if course.code == course_code
-          return course
-        end
-      end
-      nil
-    end
-
   end
 
   class Area
-    @@areas = []
     attr_reader :code, :name, :norwegian_name, :english_name
     def initialize(hash)
-      area = Area.exists(hash["code"])
-      if area.nil?
-        @code = hash["code"]
-        @name = hash["name"]
-        @norwegian_name = hash["norwegianName"]
-        @english_name = hash["english_name"]
-        @@areas << self
-      else
-        return area
-      end
-    end
-    def self.exists(code)
-      @@areas.each do |area|
-        if area.code == code
-          return area
-        end
-      end
-      nil
+      @code = hash["code"]
+      @name = hash["name"]
+      @norwegian_name = hash["norwegianName"]
+      @english_name = hash["english_name"]
     end
   end
 
@@ -121,40 +87,26 @@ module IME
   end
   class Person
     attr_reader :id, :date_of_birth, :gender, :first_name, :last_name, :email, :publication_status, :username, :employee, :affiliated, :student
-    @@persons = []
 
     def initialize(hash)
-      person = Person.exists(hash["personId"])
-      if person.nil? 
-        @id = hash["personId"]
-        @date_of_birth = hash["dateOfBirth"]
-        @gender = hash["gender"]
-        @first_name = hash["firstName"]
-        @last_name = hash["lastName"]
-        @email = hash["email"]
-        @publication_status = hash["publicationStatus"]
-        @username = hash["username"]
-        @employee = hash["employee"]
-        @affiliated = hash["affiliated"]
-        @student = hash["student"]
-        @@persons << self
-      else
-        return person
-      end
+      @id = hash["personId"]
+      @date_of_birth = hash["dateOfBirth"]
+      @gender = hash["gender"]
+      @first_name = hash["firstName"]
+      @last_name = hash["lastName"]
+      @email = hash["email"]
+      @publication_status = hash["publicationStatus"]
+      @username = hash["username"]
+      @employee = hash["employee"]
+      @affiliated = hash["affiliated"]
+      @student = hash["student"]
+      @@persons << self
     end
 
     def to_s
       "#{@first_name} #{@last_name}"
     end
 
-    def self.exists(person_id)
-      @@persons.each do |person|
-        if person.id == person_id
-          return person
-        end
-      end
-      nil
-    end
   end
   def self.find_all_courses
     url = BASE_URL + "/course/-"
@@ -170,7 +122,6 @@ module IME
     end
     return courses
   end
-
 
   protected
   BASE_URL = "http://www.ime.ntnu.no/api"
