@@ -15,6 +15,10 @@ module IME
       Course.new(result)
     end
 
+    def schedule
+      Schedule.find_for_code(self.code)
+    end
+
     protected 
 
     def initialize(json)
@@ -100,7 +104,6 @@ module IME
       @employee = hash["employee"]
       @affiliated = hash["affiliated"]
       @student = hash["student"]
-      @@persons << self
     end
 
     def to_s
@@ -108,6 +111,68 @@ module IME
     end
 
   end
+
+  class StudyProgramme
+    attr_reader :code
+    def initialize(code)
+      @code = code
+    end
+  end
+
+  class Schedule
+    attr_reader :code, :activities, :id
+    
+    def self.find_for_code(code)
+      url = BASE_URL + "/schedule/" + code
+      result = JSON.parse(open(url).string)
+      if result.has_key? 'Error'
+        raise "WebServiceError"
+      end
+      Schedule.new(result)
+    end
+
+    def self.find_for_course(course)
+      find_for_code(course.code)
+    end
+
+    protected
+    def initialize(json)
+      activities = json["activity"]
+      @activities = []
+      activities.each do |activity|
+        locations = []
+        activity["activitySchedules"].first["rooms"].each do |room|
+          locations << Location.new(room["location"],room["lydiaCode"])
+        end
+        @activities << Activity.new(activity["activityDescription"], activity["activityAcronym"], activity["activitySchedules"].first["start"], activity["activitySchedules"].first["end"], activity["activitySchedules"].first["dayNumber"], activity["activitySchedules"].first["weeks"].split(","), locations)
+      end
+      @code = activities.first["courseCode"]
+      @id = activities.first["activityId"]
+    end
+  end
+
+  class Activity
+    # NOTE: day of week is 0 indexed, starting on monday
+    attr_reader :description, :acronym, :start, :end, :day_of_week, :weeks, :locations
+    def initialize(description, acronym, start, end_time, day_of_week, weeks, locations)
+      @description = description
+      @acronym = acronym
+      @start = start
+      @end = end_time
+      @day_of_week = day_of_week
+      @weeks = weeks
+      @locations = locations
+    end
+  end
+
+  class Location
+    attr_reader :name, :code
+    def initialize(name, code)
+      @name = name
+      @code = code
+    end
+  end
+
   def self.find_all_courses
     url = BASE_URL + "/course/-"
     file = File.open(open(url).path, "rb")
@@ -121,6 +186,10 @@ module IME
       courses << course["code"]
     end
     return courses
+  end
+
+  def self.find_course(code)
+    Course.find_course(code)
   end
 
   protected
