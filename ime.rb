@@ -3,9 +3,10 @@ require 'json'
 require 'open-uri'
 
 module IME
+  # THe Course class. Contains methods for retreiving and parsing the JSON API for courses. Also contains helper-methods for extracting this subjects schedule
   class Course
     attr_reader :code, :name, :norwegian_name, :english_name, :version_code, :credit, :credit_type_code, :credit_type_name, :study_level_code, :study_level, :study_level_name, :study_programme_code, :course_type_code, :course_type_name, :grade_rule, :grade_rule_text, :taught_in_spring, :taught_in_autumn, :taught_from_term, :taught_from_year, :taught_in_english, :ouID, :info_types, :assessment, :educational_role, :education_term, :mandatory_activity, :subject_area, :credit_reduction
-
+    # Finds a course based on the course code. Returns a new Course object with all fields filled
     def self.find_course(course_code)
       url = BASE_URL + "/course/" + course_code
       result = JSON.parse(open(url).string)
@@ -14,13 +15,13 @@ module IME
       end
       Course.new(result)
     end
-
+    # Returns the scheduele for this course. Will query the JSON API of IME for this information.
     def schedule
       Schedule.find_for_code(self.code)
     end
 
     protected 
-
+    # Takes a JSON-object and parses this into a new Course-object.
     def initialize(json)
       course = json["course"]
       @code =  course["code"]
@@ -70,6 +71,7 @@ module IME
 
   class Area
     attr_reader :code, :name, :norwegian_name, :english_name
+    # Instantiates a new Area. THis helps differentiate the SubjectAreas.
     def initialize(hash)
       @code = hash["code"]
       @name = hash["name"]
@@ -89,9 +91,12 @@ module IME
       @code
     end
   end
+
+  # Mainly a class containing all information given about the lecturer. 
   class Person
     attr_reader :id, :date_of_birth, :gender, :first_name, :last_name, :email, :publication_status, :username, :employee, :affiliated, :student
-
+    
+    # Creates a new person based on a specific hash. 
     def initialize(hash)
       @id = hash["personId"]
       @date_of_birth = hash["dateOfBirth"]
@@ -105,23 +110,27 @@ module IME
       @affiliated = hash["affiliated"]
       @student = hash["student"]
     end
-
+    
+    # More of a convenience-method
     def to_s
       "#{@first_name} #{@last_name}"
     end
 
   end
-
+  
+  # Helps differentiate the different StudyProgrammes.
   class StudyProgramme
     attr_reader :code
     def initialize(code)
       @code = code
     end
   end
-
+  
+  # The class containing all data about the scheduele of a given subject. Contains methods for extracting the scheduele for a given subject that semester, or any other given semester.
   class Schedule
     attr_reader :code, :activities, :id
     
+    # Finds the schedule for a subject this semester.
     def self.find_for_code(code)
       url = BASE_URL + "/schedule/" + code
       result = JSON.parse(open(url).string)
@@ -130,7 +139,13 @@ module IME
       end
       Schedule.new(result)
     end
+    
+    # TODO implement this reasonably.
+    def self.find_for_code_and_semester(code, semester, year)
 
+    end
+    
+    # Finds a course based on a Course-object. Convinience-method.
     def self.find_for_course(course)
       find_for_code(course.code)
     end
@@ -150,10 +165,12 @@ module IME
       @id = activities.first["activityId"]
     end
   end
-
+  
+  # A Schedule has many activities, such as Øving or Forelesning. This class contains a information about a given activity.
   class Activity
     # NOTE: day of week is 0 indexed, starting on monday
     attr_reader :description, :acronym, :start, :end, :day_of_week, :weeks, :locations
+
     def initialize(description, acronym, start, end_time, day_of_week, weeks, locations)
       @description = description
       @acronym = acronym
@@ -165,6 +182,7 @@ module IME
     end
   end
 
+  # Class containing information about the location of a given Activity.
   class Location
     attr_reader :name, :code
     def initialize(name, code)
@@ -172,7 +190,8 @@ module IME
       @code = code
     end
   end
-
+  # This method retrieves a list of all the course-codes available in the IME API at the time of retrieval.
+  # WARNING contains a lot of data, may be slow.
   def self.find_all_courses
     url = BASE_URL + "/course/-"
     file = File.open(open(url).path, "rb")
@@ -187,7 +206,8 @@ module IME
     end
     return courses
   end
-
+  
+  # Convinience method. See Course:find_course for more information
   def self.find_course(code)
     Course.find_course(code)
   end
